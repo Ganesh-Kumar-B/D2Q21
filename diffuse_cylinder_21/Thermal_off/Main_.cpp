@@ -14,7 +14,7 @@
 int main()
 {
     
-    int Ny = 250 ; int Nx = 5*Ny;   
+    int Ny = 250 ; int Nx = 4*Ny;   
     Grid_N_C_2D<double> grid(Nx,Ny,2,21);
     Grid_N_C_2D<double> G_num(Nx,Ny,2,1);
     Grid_N_C_2D<bool> marker(Nx,Ny,2,1);
@@ -144,22 +144,25 @@ int main()
               if(t%step_large == 0)                                                                          //DRTT           
               Force_calc(grid,d2q21,left,right, top, bottom, Fx_in, Fy_in, Fx_boundary, Fy_boundary);  //DRTT
 
+              if(t%step_large == 0)
+              Force_SI_cylinder(grid,marker,d2q21,left,right,top,bottom,ic,jc,Fx_SI,Fy_SI,beta);
+
 
         // diffuse_B_21_Solid(grid,d2q21,G_num,marker,left, right, bottom, top);        //diffuse bounce on a solid
 
 
         grad_inlet(grid,d2q21,u0);
-        grad_outlet(grid,d2q21);
+        // grad_outlet(grid,d2q21);
 
         advection_21(grid);
         // stationary_correction(grid,d2q21);
+        outlet(grid,d2q21);
 
 
 
         BB_21(grid,d2q21,marker, left, right, top, bottom);                 //bounce back for the solid 
 
-        if(t%step_large == 0)
-        Force_SI_cylinder1(grid,marker,d2q21,left,right,top,bottom,ic,jc,Fx_SI,Fy_SI,beta);
+        
 
 
 
@@ -193,7 +196,7 @@ int main()
 
 
               
-                    time = t*Kin_Vis/(L*L);
+                      time = t*Kin_Vis/(L*L);
                     
         
                       if(t %step_large == 0){
@@ -205,7 +208,9 @@ int main()
 
 
                       std::cout<<"ufree_stream"<<u_free<<"   rho_fluid  "<<Rho_avg_fluid<<std::endl;                                                                                        //MEA
-                      std::cout<<" MEcd = "<< (jx_in - jx_out) *(cd_factor)<<" cl = "<<(jy_in - jy_out)*(cd_factor)<<std::endl;    //MEA
+                      std::cout<<" MEcd = "<< (jx_in ) *(cd_factor)<<" cl = "<<(jy_in)*(cd_factor)<<std::endl;    //MEA
+
+                      std::cout<<" MEcd = "<< (-jx_out) *(cd_factor)<<" cl = "<<(-jy_out)*(cd_factor)<<std::endl;    //MEA
                       std::cout<<" SI  Cd = "<<Fx_SI *(cd_factor)<<" Cl = "<<( Fy_SI)*(cd_factor)<<std::endl;       //DRTT                                                                                              
 
                       printMass(grid);
@@ -217,16 +222,7 @@ int main()
 
 
 
-//  for(int dv = 0; dv<17; dv++){
-// for (int i = 0+grid.noghost; i<grid.n_x_node-grid.noghost;i++){
-//                 for( int j = 0 +grid.noghost; j< grid.n_y_node -grid.noghost; j++){
-                   
-//                         if(grid.Node(i,j,dv) >0 || grid.Cell(i,j,dv) >0.0 ){
-//                         std::cout<<grid.Node(i,j,dv)<<" Node "<<i<<" "<<j<<"-- "<<grid.Cell(i,j,dv)<<"cell  "<<i<<" "<<j<<" "<<dv<<std::endl;
 
-
-//                         }
-//                     }}}
 
 
 
@@ -242,102 +238,5 @@ std::cout<<std::endl;
    
 
 
-  //  initialization(grid,d3q19,0.0);
-   
-  //    grid.Cell(5,11,dV_ZERO_P3)=0.1;
-
-  //  printVtk(d3q19,grid,0);
-
-  //   for(int t = 1; t < 510;t++){std::cout<<t<<" ";
-  //    collide(grid,d3q19,beta,tau,gx,gy);
-        
-       
-  //       periodic(grid);
-  //        bounce_back(grid);
-
-  //       advection(grid);
-  //      // bounce_back_wall(grid);
-  //      printMass(grid);
-  //      if(t%5 == 0){
-  //     printVtk(d3q19,grid,t);
-  //      }
-  //   }
 
 
-// for (int i =0; i<grid.n_x_node;i++){
-//                 for( int j = 0; j< grid.n_y_node; j++){
-//                     for(int dv = 0; dv<17; dv++){
-//                         grid.Node(i,j,dv) = 0;
-//                         grid.Cell(i,j,dv) = 0;
-//                     }}}
-
-
-
-// for (int i =0; i<grid.n_x_node;i++){
-//                 for( int j = 0; j< grid.n_x_node; j++){
-//                     for(int dv = 0; dv<13; dv++){
-//                         if(grid.Node(i,j,dv) ==0.1 || grid.Cell(i,j,dv) == 0.1 ){
-//                         std::cout<<grid.Node(i,j,dv)<<" Node "<<i<<" "<<j<<" "<<grid.Cell(i,j,dv)<<"cell  "<<i<<" "<<j<<" "<<dv<<std::endl;
-
-
-//                         }
-//                     }}}
-
-
-
-
-
-
-
-
-
-
-
-
-    // for (int t = 0; t< 10; t++){
-    //     std::cout<<t<<" ";
-    //   // collide(grid,d3q19,beta,tau,gx,gy);
-        
-    //    periodic(grid);
-    //    bounce_back_prep(grid);
-    //    advection(grid);
-    //    bounce_back_wall(grid);
-    //     printMass(grid);
-    //     if(t % 1 ==0){
-    //     printVtk(d3q19,grid,t);
-    //     }
-
-
-    // }
-
-
-
-
-
-
-
-
-//----------------------------------------------------------------writing to a file----------------------//////////////
-// std::ofstream my_File("bb_vel_node.txt");
-
-// for(int i = 0 ; i<bb_node.size();i++){
-//     for(int j = 0; j<bb_node[i].size();j++){
-//      if (j == 2){my_File<<bb_node[i][j]<<std::endl;}
-//           else{my_File<<bb_node[i][j]<<",";}
-
-// //     }}
-// for(int i = 0 ; i<bb_node.size();i++){
-//     for(int j = 0; j<bb_node[i].size();j++){
-//      if (j == 2){my_File<<bb_node[i][j]<<std::endl;}
-//           else{my_File<<bb_node[i][j]<<",";}
-
-//     }}
-
-//       std::ofstream my_File1("bb_vel_cell.txt");
-
-// for(int i = 0 ; i<bb_cell.size();i++){
-//     for(int j = 0; j<bb_cell[i].size();j++){
-//      if (j == 2){my_File1<<bb_cell[i][j]<<std::endl;}
-//           else{my_File1<<bb_cell[i][j]<<",";}
-
-//     }}
