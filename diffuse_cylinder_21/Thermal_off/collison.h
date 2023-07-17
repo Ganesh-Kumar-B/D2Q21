@@ -65,18 +65,21 @@ template<typename T>
 inline void get_equi(double feq[21], lbmD2Q21<T> &lb, double ux, double uy, double rho, double theta ){
 
     // double dtheta = 0; //set it zero for isothermal case
-    double dtheta  = (theta - lb.theta0)/ lb.theta0;
 
-    double thetainv=  1/theta;
+
+
+
+    double thetainv=  lb.thetaInverse;
 
     double u2 = ux*ux + uy*uy;
     double a1=0, ci2 = 0 , ci4 = 0 ;
     double  first,second,third,feq0=0;
+
     for (int dv = 0; dv< 21; dv++){
 
         ci2 = lb.Cx[dv] * lb.Cx[dv] + lb.Cy[dv] * lb.Cy[dv];
         ci4 = ci2*ci2;
-        feq0 = rho*lb.W[dv]*(1 + 0.5 * dtheta *(ci2 * lb.thetaInverse -2) + dtheta*dtheta*(1 - ci2*lb.thetaInverse + 0.125 * ci4 * lb.thetaInverse* lb.thetaInverse));
+        feq0 = rho*lb.W[dv]*(1.0);
         // std::cout<<rho<<std::endl;
         
         first  = (ux*lb.Cx[dv] + uy*lb.Cy[dv])*thetainv;
@@ -84,10 +87,8 @@ inline void get_equi(double feq[21], lbmD2Q21<T> &lb, double ux, double uy, doub
         third = -0.5*u2*thetainv;
         feq[dv] = feq0*(1+ first + second + third);
         
-
-
     }
-         
+        
 
 }
 
@@ -176,7 +177,7 @@ void get_grad_mom_thermal_node(Grid_N_C_2D<T> &lbgrid, lbmD2Q21<T1> &lb,double &
     Uy = Uy/Rho;
 
     for(int dv = 0; dv<21; dv++)
-        theta += lbgrid.Cell(X,Y,dv)*(lb.Cx[dv]*lb.Cx[dv] + lb.Cy[dv]*lb.Cy[dv]);    //=>> f.ci^2
+        theta += lbgrid.Node(X,Y,dv)*(lb.Cx[dv]*lb.Cx[dv] + lb.Cy[dv]*lb.Cy[dv]);    //=>> f.ci^2
 
         theta = 0.5*(theta - Rho*(Ux*Ux + Uy*Uy))/(Rho);        //(sum_fi.ci^2 - rho u^2)/(2* Rho)
 
@@ -196,14 +197,14 @@ void get_grad_mom_thermal_Cell(Grid_N_C_2D<T> &lbgrid, lbmD2Q21<T1> &lb,double &
 
 
     for(int dv = 0; dv <21; dv++){
-        Ux  += lbgrid.Node(X,Y,dv)*lb.Cx[dv];
-        Uy  += lbgrid.Node(X,Y,dv)*lb.Cy[dv];
-        Rho += lbgrid.Node(X,Y,dv);
+        Ux  += lbgrid.Cell(X,Y,dv)*lb.Cx[dv];
+        Uy  += lbgrid.Cell(X,Y,dv)*lb.Cy[dv];
+        Rho += lbgrid.Cell(X,Y,dv);
 
-        pxx += lbgrid.Node(X,Y,dv)*lb.Cx[dv] * lb.Cx[dv];
-        pyy += lbgrid.Node(X,Y,dv)*lb.Cy[dv] * lb.Cy[dv];
+        pxx += lbgrid.Cell(X,Y,dv)*lb.Cx[dv] * lb.Cx[dv];
+        pyy += lbgrid.Cell(X,Y,dv)*lb.Cy[dv] * lb.Cy[dv];
 
-        pxy += lbgrid.Node(X,Y,dv)*lb.Cx[dv] * lb.Cy[dv];
+        pxy += lbgrid.Cell(X,Y,dv)*lb.Cx[dv] * lb.Cy[dv];
     }   
     Ux = Ux/Rho;
     Uy = Uy/Rho;
@@ -213,6 +214,7 @@ void get_grad_mom_thermal_Cell(Grid_N_C_2D<T> &lbgrid, lbmD2Q21<T1> &lb,double &
         theta += lbgrid.Cell(X,Y,dv)*(lb.Cx[dv]*lb.Cx[dv] + lb.Cy[dv]*lb.Cy[dv]);    //=>> f.ci^2
 
         theta = 0.5*(theta - Rho*(Ux*Ux + Uy*Uy))/(Rho);        //(sum_fi.ci^2 - rho u^2)/(2* Rho)
+
 
 
 }
@@ -226,42 +228,17 @@ template<typename T>
 void get_grad_isothermal(double feq[21], lbmD2Q21<T> &lb, double ux, double uy, double rho, double pxx, double pyy, double pxy){
 
 
-
-double jx = rho*ux; double jy = rho* uy; 
-
-
 for (int dv = 0 ; dv< 21; dv++){
 
         feq[dv] = lb.W[dv]*(
                         rho +   
-                        (jx*lb.Cx[dv] + jy * lb.Cy[dv])*lb.thetaInverse   + 
+                        (ux*lb.Cx[dv] + uy * lb.Cy[dv])*lb.thetaInverse*rho   + 
                         0.5*lb.thetaInverse*lb.thetaInverse*((pxx - rho*lb.theta0)*(lb.Cx[dv] *lb.Cx[dv] - lb.theta0) +
                                                              (pyy - rho*lb.theta0)*(lb.Cy[dv] *lb.Cy[dv] - lb.theta0) + 
                                                              2.0*(pxy)*(lb.Cx[dv]* lb.Cy[dv])
                                                             )                       
                         );
 }
-
-//   double dot1(0.0), dot2a(0.0), dot2b(0.0), dot2c(0.0);
-//   double cx2,cy2;
-  
-//    double Temp = lb.theta0; double Tempinv = lb.thetaInverse;
-
-//   for(int dV=0;dV<21;dV++)
-//   {
-//     dot1 = (ux*lb.Cx[dV] + uy*lb.Cy[dV])*Tempinv*rho;
-//     cx2 = lb.Cx[dV]*lb.Cx[dV];
-//     cy2 = lb.Cy[dV]*lb.Cy[dV];
-    
-//     dot2a = (pxx - rho*Temp)*(cx2 - Temp);
-//     dot2b = (pyy - rho*Temp)*(cy2 - Temp);
-//     dot2c = 2.0 * pxy * (lb.Cx[dV]*lb.Cy[dV]);
-
-//     feq[dV] = lb.W[dV] * (  rho + dot1 + 0.5*Tempinv*Tempinv*( dot2a + dot2b + dot2c ) );    
-//   }
-
-
-
 }
 
 
@@ -273,19 +250,22 @@ double f[21] = {0};
 
 double ux, uy, rho, pxx, pyy, pxy,theta;
 
-for(int j =0; j< grid.n_y_node; j ++){
+for(int j = 0; j< grid.n_y_node - 0; j ++){
 
     get_grad_mom_thermal_node(grid, lb, ux, uy, rho,theta, pxx, pyy,pxy,grid.noghost, j);
-    ux = u0; uy = 0; 
-12
-    get_grad_isothermal(f,lb,ux,uy, rho,theta, pxx, pyy, pxy);
+
+    ux = u0, uy = 0.0;
+
+    get_grad_isothermal(f,lb,ux,uy, rho, pxx, pyy, pxy);
 
     for(int dv = 0; dv< 21; dv++){
+
         grid.Node(0,j,dv) = f[dv];
         grid.Node(1,j,dv) = f[dv];
         
         grid.Cell(0,j,dv) = f[dv];
         grid.Cell(1,j,dv) = f[dv];
+
     }
 }
 }
@@ -302,7 +282,7 @@ double ux, uy, rho, pxx, pyy, pxy,theta;
 for(int j = 0; j< grid.n_y_node -0 ; j ++){
 
     get_grad_mom_thermal_Cell(grid, lb, ux, uy, rho,theta, pxx, pyy,pxy, grid.n_x_node - grid.noghost -1 , j);
-    get_grad_isothermal(f,lb,ux,uy, rho,theta, pxx, pyy, pxy);
+    get_grad_isothermal(f,lb,ux,uy, rho, pxx, pyy, pxy);
 
     for(int dv = 0; dv< 21; dv++){
         grid.Node(grid.n_x_node - grid.noghost   ,j,dv) = f[dv];

@@ -235,6 +235,154 @@ for(int i = left; i<=right-1; i++)
 
 
 template<typename T, typename T1>
+void Force_SI_cylinder( Grid_N_C_2D<T> &grid,Grid_N_C_2D<T1> &marker,lbmD2Q21<T> &lb,int left, int right, int top, int bottom, int ic, int jc,
+                    double &FxSI, double &FySI,  double beta ){
+    FxSI = 0; FySI = 0;
+                        double ux,uy, rho = 1.0, feq[21] = {0};
+
+    double theta = 0;
+
+double nx = 0, ny = 0; double r = 0;
+
+
+    for(int i = left; i<=right; i++){
+        for(int j = bottom; j<=top; j++){
+
+            int ib,jb;
+
+            if(marker.Node(i,j,0) == FLUID){
+                ib = 0; jb = 0;
+                for(int dv = 0; dv<5; dv++)
+                if(marker.Node(i +(int) lb.Cx[dv], j +(int) lb.Cy[dv],0) == SOLID){
+                    ib = i;
+                    jb = j;  //this will imply that  we are on the boundary points
+                }
+
+                for(int dv = 9; dv<13; dv++)
+                if(marker.Cell(i +(int) lb.CxF[dv], j +(int) lb.CyF[dv],0) == SOLID){
+                    ib = i;
+                    jb = j;  //this will imply that  we are on the boundary points
+                }
+
+
+
+                double tau_xx = 0, tau_yy = 0, tau_xy = 0;
+                double sigma_xx = 0, sigma_yy = 0, sigma_xy = 0;
+
+                if(ib != 0 && jb!= 0){ 
+                    // this we are working on the boundary points if ib == 0 and jb == 0 then we enter  in this condition; 
+                    get_moments_node(grid,lb,ux,uy,rho,theta, ib,jb);
+                    get_equi(feq, lb, ux, uy, rho,theta);
+
+                    double tau_xx = 0, tau_yy = 0, tau_xy = 0;
+                    double sigma_xx = 0, sigma_yy = 0, sigma_xy = 0;
+                    for(int dv = 0; dv<21; dv++){
+
+                        tau_xx += (1 - beta)*(grid.Node(i,j,dv) - feq[dv]) *(lb.Cx[dv] * lb.Cx[dv] - 0.5 * lb.theta0);
+                        tau_yy += (1 - beta)*(grid.Node(i,j,dv) - feq[dv]) *(lb.Cy[dv] * lb.Cy[dv] - 0.5 * lb.theta0);
+
+                        tau_xy += (1 - beta)*(grid.Node(i,j,dv) - feq[dv]) *(lb.Cx[dv] * lb.Cy[dv]);
+
+                    }
+
+                    r = sqrt((ib - ic)*(ib - ic) +(jb - jc)*(jb - jc));
+
+                    nx = (ib - ic)/r;
+                    ny = (jb - jc)/r;
+
+                    
+                    sigma_xx = tau_xx - beta*rho*lb.theta0;  // the total stress tensor on the object added with - p = rho*theta
+                    sigma_yy = tau_yy - beta*rho*lb.theta0;
+                    sigma_xy = tau_xy;
+
+                    FxSI =  FxSI + sigma_xx*nx + sigma_xy*ny;
+                    FySI =  FySI + sigma_xy*nx + sigma_yy*ny;
+
+                    
+
+
+                }
+        }
+
+        ib = 0; jb = 0;
+
+            if(marker.Cell(i,j,0) == FLUID){
+                for(int dv = 0; dv<5; dv++)
+                if(marker.Cell(i +(int) lb.Cx[dv], j +(int) lb.Cy[dv],0) == SOLID){
+                    ib = i;
+                    jb = j;  //this will imply that  we are on the boundary points
+                }
+
+                for(int dv = 9; dv<13; dv++)
+                if(marker.Node(i +(int) lb.CxC[dv], j +(int) lb.CyC[dv],0) == SOLID){
+                    ib = i;
+                    jb = j;  //this will imply that  we are on the boundary points
+                }
+
+
+
+                double tau_xx = 0, tau_yy = 0, tau_xy = 0;
+                double sigma_xx = 0, sigma_yy = 0, sigma_xy = 0;
+
+                if(ib != 0 && jb!= 0){
+                    get_moments_cell(grid,lb,ux,uy,rho,theta, ib,jb);
+                    get_equi(feq, lb, ux, uy, rho,theta);
+
+                    double tau_xx = 0, tau_yy = 0, tau_xy = 0;
+                    double sigma_xx = 0, sigma_yy = 0, sigma_xy = 0;
+                    for(int dv = 0; dv<21; dv++){
+
+                        tau_xx += (1 - beta)*(grid.Cell(i,j,dv) - feq[dv]) *(lb.Cx[dv] * lb.Cx[dv] - 0.5 * lb.theta0);
+                        tau_yy += (1 - beta)*(grid.Cell(i,j,dv) - feq[dv]) *(lb.Cy[dv] * lb.Cy[dv] - 0.5 * lb.theta0);
+
+                        tau_xy += (1 - beta)*(grid.Cell(i,j,dv) - feq[dv]) *(lb.Cx[dv] * lb.Cy[dv]);
+
+
+                    }
+
+                    r = sqrt((ib+0.5 - ic)*(ib+0.5 - ic) +(jb+0.5 - jc)*(jb+0.5 - jc));
+
+                    nx = (ib+0.5 - ic)/r;
+                    ny = (jb+0.5 - jc)/r;
+
+                    
+                    sigma_xx = tau_xx - beta*rho*lb.theta0;  // the total stress tensor on the object added with - p = rho*theta
+                    sigma_yy = tau_yy - beta*rho*lb.theta0;
+                    sigma_xy = tau_xy;
+
+                    FxSI =  FxSI + sigma_xx*nx + sigma_xy*ny;
+                    FySI =  FySI + sigma_xy*nx + sigma_yy*ny;
+                    
+
+
+                }
+        }
+
+
+
+
+        }
+    }
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+template<typename T, typename T1>
 void Force_SI_cylinder1( Grid_N_C_2D<T> &grid,Grid_N_C_2D<T1> &marker,lbmD2Q21<T> &lb,int left, int right, int top, int bottom, int ic, int jc,
                     double &FxSI, double &FySI,  double beta ){
     FxSI = 0; FySI = 0;

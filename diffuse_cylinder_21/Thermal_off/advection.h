@@ -508,7 +508,7 @@ void mom_in(Grid_N_C_2D<T> &grid, lbmD2Q21<T> &lb, Grid_N_C_2D<T1> &marker, doub
              }
         }}
 
-std::cout<<"count "<<count<< std:: endl;
+// std::cout<<"count "<<count<< std:: endl;
 
 
 
@@ -627,7 +627,7 @@ void mom_out(Grid_N_C_2D<T> &grid, lbmD2Q21<T> &lb, Grid_N_C_2D<T1> &marker, dou
              }
         }}
 
-        std::cout<<"count "<<count<< std:: endl;
+        // std::cout<<"count "<<count<< std:: endl;
 
 }
 
@@ -1375,27 +1375,13 @@ get_equi(feq,lb,ux,uy,rho,lb.theta0);
 
 
 template<typename T, typename T1>
-void outlet(Grid_N_C_2D<T> &grid,lbmD2Q21<T1> &lb, double ux, double uy,double rho){
-
-double feq[21] = {0};
-
-get_equi(feq,lb,ux,uy,rho,lb.theta0);
-
-    for(int i = grid.n_x_node - grid.noghost -4; i < grid.n_x_node -grid.noghost  ;i++){
-        for(int j = grid.noghost; j<grid.n_y_node - grid.noghost;j++){
+void outlet(Grid_N_C_2D<T> &grid,lbmD2Q21<T1> &lb){
 
 
+    for(int i = grid.n_x_node - grid.noghost -3; i < grid.n_x_node -grid.noghost  ;i++){
+        for(int j = 0; j<grid.n_y_node -0;j++){
 
-            ///============for equilibrizing the outer wall also
-            // for(int dv = 0; dv <grid.d_v; dv++){
-            //     grid.Node(i,j,dv) = feq_Node[dv];
-            // }
-                        
 
-            // for(int dv = 0; dv <grid.d_v; dv++){
-            //     grid.Cell(i,j,dv) = feq_Cell[dv];
-            // }
-            
 
             //============for copying the populations in the outer wall
             for(int dv = 0; dv< 21; dv++){

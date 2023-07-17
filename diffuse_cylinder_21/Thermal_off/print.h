@@ -14,7 +14,7 @@ void printdata(lbmD2Q21<T1> &lbModel,  Grid_N_C_2D<T> &gridLB,  int step, double
   std::ofstream file;
   char fileName[250];
   
-  sprintf(fileName,"./result/velocity_%d.txt",step) ;
+  sprintf(fileName,"./check/velocity_%d.txt",step) ;
   
   file.open(fileName) ;
   file<<"x,y,ux,uy,rho,theta"<<std::endl;
