@@ -1,6 +1,6 @@
 #ifndef  ADVECTION_H
 #define  ADVECTION_H
-
+//change
 #include "lbmD2Q21.h"
 // enum velocityDir{   dV_ZERO_ZERO, dV_P1_ZERO, dV_ZERO_P1, dV_M1_ZERO, dV_ZERO_M1,  //SC1
 //                     dV_P2_ZERO, dV_ZERO_P2, dV_M2_ZERO, dV_ZERO_M2,                //SC2
