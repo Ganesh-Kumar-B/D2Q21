@@ -234,7 +234,7 @@ for(int i = left; i<=right-1; i++)
 
 
 
-template<typename T, typename T1>
+template<typename T, typename T1> //form the physical Review E
 void Force_SI_cylinder( Grid_N_C_2D<T> &grid,Grid_N_C_2D<T1> &marker,lbmD2Q21<T> &lb,int left, int right, int top, int bottom, int ic, int jc,
                     double &FxSI, double &FySI,  double beta ){
     FxSI = 0; FySI = 0;
@@ -337,7 +337,6 @@ double nx = 0, ny = 0; double r = 0;
 
                         tau_xy += (1 - beta)*(grid.Cell(i,j,dv) - feq[dv]) *(lb.Cx[dv] * lb.Cy[dv]);
 
-
                     }
 
                     r = sqrt((ib+0.5 - ic)*(ib+0.5 - ic) +(jb+0.5 - jc)*(jb+0.5 - jc));
@@ -357,32 +356,15 @@ double nx = 0, ny = 0; double r = 0;
 
                 }
         }
-
-
-
-
         }
     }
-
     }
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-template<typename T, typename T1>
+template<typename T, typename T1> // from the inamuro paper
 void Force_SI_cylinder1( Grid_N_C_2D<T> &grid,Grid_N_C_2D<T1> &marker,lbmD2Q21<T> &lb,int left, int right, int top, int bottom, int ic, int jc,
                     double &FxSI, double &FySI,  double beta ){
     FxSI = 0; FySI = 0;
@@ -500,24 +482,168 @@ double nx = 0, ny = 0; double r = 0;
                     FxSI =  FxSI + sigma_xx*nx + sigma_xy*ny;
                     FySI =  FySI + sigma_xy*nx + sigma_yy*ny;
 
-                    
-
-
                 }
         }
-
-
-
-
         }
     }
-
     }
 
 
 
 
 
+template<typename T, typename T1>
+void Mom_in_CS( Grid_N_C_2D<T> &grid,lbmD2Q21<T1> &lb,int left, int right, int top, int bottom, double &Fxin, double &Fyin){
+
+Fxin = 0; Fyin = 0;
+double nx = 0, ny = 0;
+
+//- bottom
+for(int i = left +1; i<= right -1; i++){
+
+int j = bottom;
+nx = 0; ny = -1;
+for(int dv = 0; dv<grid.d_v; dv++){
+
+    if(lb.Cx[dv]*nx   +   lb.Cy[dv]*ny < 0){
+
+        Fxin += grid.Node(i,j,dv)*lb.Cx[dv];
+        Fyin += grid.Node(i,j,dv)*lb.Cy[dv];
+
+
+    }
+}
+}
+
+
+//- top
+for(int i = left +1; i<= right -1; i++){
+
+int j = top;
+nx = 0; ny =1;
+for(int dv = 0; dv<grid.d_v; dv++){
+
+    if(lb.Cx[dv]*nx   +   lb.Cy[dv]*ny < 0){
+
+        Fxin += grid.Node(i,j,dv)*lb.Cx[dv];
+        Fyin += grid.Node(i,j,dv)*lb.Cy[dv];
+
+    }
+}
+}
+
+//- left
+
+for(int j = bottom; j <= top; j++){
+
+int i = left;
+nx = -1; ny = 0;
+for(int dv = 0; dv <grid.d_v; dv++){
+    if(lb.Cx[dv]*nx   +   lb.Cy[dv]*ny < 0){
+
+        Fxin += grid.Node(i,j,dv)*lb.Cx[dv];
+        Fyin += grid.Node(i,j,dv)*lb.Cy[dv];
+    }
+    }
+}
+
+//-right
+for(int j = bottom; j <= top; j++){
+
+int i = right;
+nx = 1; ny = 0;
+for(int dv = 0; dv <grid.d_v; dv++){
+
+
+    if(lb.Cx[dv]*nx   +   lb.Cy[dv]*ny < 0){
+
+        Fxin += grid.Node(i,j,dv)*lb.Cx[dv];
+        Fyin += grid.Node(i,j,dv)*lb.Cy[dv];
+
+    }
+}
+
+}
+
+}
+
+
+
+
+
+template<typename T, typename T1>
+void Mom_out_CS( Grid_N_C_2D<T> &grid,lbmD2Q21<T1> &lb,int left, int right, int top, int bottom, double &Fxout, double &Fyout){
+
+
+Fxout = 0; Fyout = 0;
+double nx = 0, ny = 0;
+
+
+
+//- bottom
+for(int i = left +1; i<= right -1; i++){
+
+int j = bottom;
+nx = 0; ny = -1;
+for(int dv = 0; dv<grid.d_v; dv++){
+
+    if(lb.Cx[dv]*nx   +   lb.Cy[dv]*ny > 0){
+
+        Fxout += grid.Node(i,j,dv)*lb.Cx[dv];
+        Fyout += grid.Node(i,j,dv)*lb.Cy[dv];
+
+    }
+}
+}
+
+
+//- top
+for(int i = left +1; i<= right -1; i++){
+
+int j = top;
+nx = 0; ny =1;
+for(int dv = 0; dv<grid.d_v; dv++){
+
+    if(lb.Cx[dv]*nx   +   lb.Cy[dv]*ny > 0){
+
+        Fxout += grid.Node(i,j,dv)*lb.Cx[dv];
+        Fyout += grid.Node(i,j,dv)*lb.Cy[dv];
+
+    }
+}
+}
+
+//- left
+for(int j = bottom; j <= top; j++){
+
+int i = left;
+nx = -1; ny = 0;
+for(int dv = 0; dv <grid.d_v; dv++){
+    if(lb.Cx[dv]*nx   +   lb.Cy[dv]*ny > 0){
+
+        Fxout += grid.Node(i,j,dv)*lb.Cx[dv];
+        Fyout += grid.Node(i,j,dv)*lb.Cy[dv];
+
+    }
+}
+}
+
+//-right
+for(int j = bottom; j <= top; j++){
+
+int i = right;
+nx = 1; ny = 0;
+for(int dv = 0; dv <grid.d_v; dv++){
+
+    if(lb.Cx[dv]*nx   +   lb.Cy[dv]*ny > 0){
+
+        Fxout += grid.Node(i,j,dv)*lb.Cx[dv];
+        Fyout += grid.Node(i,j,dv)*lb.Cy[dv];
+
+    }
+}
+}
+}
 
 
 

@@ -14,7 +14,7 @@
 int main()
 {
     
-    int Ny = 250 ; int Nx = 4*Ny;   
+    int Ny = 400 ; int Nx = 4*Ny;   
     Grid_N_C_2D<double> grid(Nx,Ny,2,21);
     Grid_N_C_2D<double> G_num(Nx,Ny,2,1);
     Grid_N_C_2D<bool> marker(Nx,Ny,2,1);
@@ -33,11 +33,15 @@ int main()
     // double gx = 8.0*u0*u0/(40*Re);
     // double gy = 0.0*u0*u0/(40*Re);
     
-    double Re = 10;
+
+
+
+
+    double Re = 100;
     std::cout<<"Re "<<Re<<std::endl;
     double L = 0.05*Ny;
     double Kn = 0.001;
-    double Ma = 0.02;
+    double Ma = 0.05;
     std::cout<<"Ma "<< Ma <<std::endl;
     double u0 = Ma * cs;
     std::cout<<"u0 = "<<u0<<std::endl;
@@ -60,12 +64,15 @@ int main()
 
 
 
+
+
     std::cout<<"theta_bottom "<<theta_bottom<<std::endl;
     std::cout<<"theta_top "<<theta_top<<std::endl;
     double a;
 
-    double  Rho_avg_fluid,Fx_dt,Fy_dt,Fx,Fy,ux_stream,Fx_SI,Fy_SI,
-            Jx  ,Jy  ,Jx_dt  ,Jy_dt  ,Fx_in  ,Fy_in, Fx_boundary,Fy_boundary,mass  ;
+
+    double  Rho_avg_fluid,Fx_dt,Fy_dt,Fx,Fy,ux_stream,Fx_SI,Fy_SI, Fx_out, Fy_out,
+            Jx  ,Jy  ,Jx_dt  ,Jy_dt  ,Fx_in  ,Fy_in, Fx_boundary,Fy_boundary,mass;
 
 
 
@@ -112,17 +119,22 @@ int main()
       std::cout<<"Simulation time "<< sim_time<<std::endl;
       for(int t = 1; t <= sim_time;t++){
 
-                  if(t%step_large == 0)                                        //DRTT
-                  J_domain(grid,d2q21, Jx, Jy, left, right, top, bottom);  //DRTT
+
+
+            if(t%step_large == 0)                                        //DRTT
+            J_domain(grid,d2q21, Jx, Jy, left, right, top, bottom);  //DRTT
 
 
 
-        collide(grid,d2q21,beta,tau);
-        // periodic_21(grid);
-        // bounce_back(grid);
 
-        // periodic_x(grid,d2q21);
-        periodic_y(grid,d2q21);
+
+
+            collide(grid,d2q21,beta,tau);
+            // periodic_21(grid);
+            // bounce_back(grid);
+
+            // periodic_x(grid,d2q21);
+            periodic_y(grid,d2q21);
 
 
 
@@ -131,29 +143,31 @@ int main()
         // slip_wall_bb(grid,d2q21);
 
 
+
         // diffuse_B_21_new(grid,d2q21,0.0,u0,theta_top, theta_bottom);
         // diffuse_B_21(grid,d2q21,0.0,u0,theta_bottom,theta_top);      //with respect to incoming populations
         // diffuse_B_21_out(grid,d2q21,u0);   //with respect to outgoing populations
         
 
 
-              if(t%step_large == 0)                                                                       //MEA
-              mom_in(grid,d2q21,marker, jx_in, jy_in, left, right, top, bottom);                          //MEA 
+        if(t%step_large == 0)                                                                       //MEA
+        mom_in(grid,d2q21,marker, jx_in, jy_in, left, right, top, bottom);                          //MEA 
+
+        
+
+        if(t%step_large == 0)
+            Force_SI_cylinder(grid,marker,d2q21,left,right,top,bottom,ic,jc,Fx_SI,Fy_SI,beta);
 
 
-              if(t%step_large == 0)                                                                          //DRTT           
-              Force_calc(grid,d2q21,left,right, top, bottom, Fx_in, Fy_in, Fx_boundary, Fy_boundary);  //DRTT
-
-              if(t%step_large == 0)
-              Force_SI_cylinder(grid,marker,d2q21,left,right,top,bottom,ic,jc,Fx_SI,Fy_SI,beta);
-
+        if(t%step_large == 0)
+        Mom_out_CS(grid,d2q21,left,right,top,bottom,Fx_out,Fy_out);
 
         // diffuse_B_21_Solid(grid,d2q21,G_num,marker,left, right, bottom, top);        //diffuse bounce on a solid
 
 
         grad_inlet(grid,d2q21,u0);
         // grad_outlet(grid,d2q21);
-
+ 
         advection_21(grid);
         // stationary_correction(grid,d2q21);
         outlet(grid,d2q21);
@@ -162,12 +176,14 @@ int main()
 
         BB_21(grid,d2q21,marker, left, right, top, bottom);                 //bounce back for the solid 
 
-        
+    
+
+        if(t%step_large == 0)                                                                               //MEA
+        mom_out(grid,d2q21,marker, jx_out, jy_out, left, right, top, bottom);                               //MEA
 
 
-
-                if(t%step_large == 0)                                                                               //MEA
-                mom_out(grid,d2q21,marker, jx_out, jy_out, left, right, top, bottom);                               //MEA
+        if(t%step_large == 0)
+        Mom_in_CS(grid,d2q21,left,right,top,bottom,Fx_in,Fy_in);
 
 
 
@@ -177,62 +193,48 @@ int main()
 
 
 
-                  if(t%step_large== 0){                                                                 //DRTT                             
-                      J_domain (grid, d2q21, Jx_dt, Jy_dt, left, right, top, bottom);                   //DRTT                                                                                 
-                                                                                                        //DRTT      
-                      Fx = Jx - Jx_dt + Fx_in -Fx_boundary;                                             //DRTT                                                        
-                      Fy = Jy - Jy_dt + Fy_in -Fy_boundary;                                             //DRTT                                                       
-                                                                                                        //DRTT                  
-                                                                                                        //DRTT                                          
-                      u_free_stream(grid,marker,d2q21, u_free,Rho_avg_fluid);                                                //DRTT
-                      double cd_factor = (2.0 / (u_free*u_free*Rho_avg_fluid*L)) ;
+        if(t%step_large== 0){                                                                 //DRTT                             
+            J_domain (grid, d2q21, Jx_dt, Jy_dt, left, right, top, bottom);                   //DRTT                                                                                 
+                                                                                            //DRTT      
+            Fx = Fx_out - Fx_in + (jx_in - jx_out);                                             //DRTT                                                        
+            Fy = Fy_out - Fy_in + (jy_in - jy_out);                                             //DRTT                                                       
+                                                                                            //DRTT                  
+                                                                                            //DRTT                                          
+            u_free_stream(grid,marker,d2q21, u_free,Rho_avg_fluid);                                                //DRTT
+            double cd_factor = (2.0 / (u_free*u_free*Rho_avg_fluid*L)) ;
 
-                                     
-                      std::cout<<" DRTT Cd = "<<Fx *(cd_factor)<<" Cl = "<<( Fy)*(cd_factor)<<std::endl;       //DRTT                                                                                              
-                  
-                  } 
-
-
-
-
-              
-                      time = t*Kin_Vis/(L*L);
-                    
+            std::cout<<" DRTT Cd = "<<Fx *(cd_factor)<<" Cl = "<<( Fy)*(cd_factor)<<std::endl;       //DRTT                                                                                              
         
-                      if(t %step_large == 0){
-                      std::cout<<" time "<<t<<" "<<time;
-
-                      u_free_stream(grid,marker,d2q21, u_free,Rho_avg_fluid);
-                      double cd_factor = (2.0 / (u_free*u_free*Rho_avg_fluid*L)) ;
+        } 
 
 
+    
+            time = t*Kin_Vis/(L*L);
+        
 
-                      std::cout<<"ufree_stream"<<u_free<<"   rho_fluid  "<<Rho_avg_fluid<<std::endl;                                                                                        //MEA
-                      std::cout<<" MEcd = "<< (jx_in ) *(cd_factor)<<" cl = "<<(jy_in)*(cd_factor)<<std::endl;    //MEA
+            if(t %step_large == 0){
+            std::cout<<" time "<<t<<" "<<time;
 
-                      std::cout<<" MEcd = "<< (-jx_out) *(cd_factor)<<" cl = "<<(-jy_out)*(cd_factor)<<std::endl;    //MEA
-                      std::cout<<" SI  Cd = "<<Fx_SI *(cd_factor)<<" Cl = "<<( Fy_SI)*(cd_factor)<<std::endl;       //DRTT                                                                                              
+            u_free_stream(grid,marker,d2q21, u_free,Rho_avg_fluid);
+            double cd_factor = (2.0 / (u_free*u_free*Rho_avg_fluid*L)) ;
 
-                      printMass(grid);
-                      printdata(d2q21,grid,t,u0);
-                    }
+            std::cout<<"ufree_stream"<<u_free<<"   rho_fluid  "<<Rho_avg_fluid<<std::endl;                                                                                        //MEA
+            std::cout<<" MEcd = "<< (jx_in ) *(cd_factor)<<" cl = "<<(jy_in)*(cd_factor)<<std::endl;    //MEA
 
+            std::cout<<" MEcd = "<< (-jx_out) *(cd_factor)<<" cl = "<<(-jy_out)*(cd_factor)<<std::endl;    //MEA
+            std::cout<<" SI  Cd = "<<Fx_SI *(cd_factor)<<" Cl = "<<( Fy_SI)*(cd_factor)<<std::endl;       //DRTT                                                                                              
+
+            printMass(grid);
+            printdata(d2q21,grid,t,u0);
+            
+        }
     }
 //------------------------------------------------------------------------//
 
 
 
-
-
-
-
-
-
 std::cout<<std::endl;
     
-
-
-
 
    }
    
